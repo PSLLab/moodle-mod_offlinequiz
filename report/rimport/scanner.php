@@ -26,10 +26,10 @@
  *
  */
 
-define("A3_WIDTH", "2100");                    // Paper size.
-define("A3_HEIGHT", "2970");
+define("A3_WIDTH", "2160");                    // Paper size.
+define("A3_HEIGHT", "2790");
 define("LAYER_WIDTH", "1815");                 // Active layer from corner cross to corner cross.
-define("LAYER_HEIGHT", "2723");
+define("LAYER_HEIGHT", "2553");
 
 define("MAX_BORDER", "110");                   // Max. black margin of rotated scan sheet.
 define("MIN_BORDER", "20");                    // Width of white margin that will be ignored.
@@ -169,7 +169,7 @@ class offlinequiz_page_scanner {
         if ($maxanswers > 12) {
             $this->formtype = 1;
         }
-        $this->numpages = ceil($maxquestions / ($this->formtype * 24));
+        $this->numpages = ceil($maxquestions / ($this->formtype * 21));
     }
 
     /**
@@ -234,13 +234,86 @@ class offlinequiz_page_scanner {
             }
             $y += 65;
 
-            if (($number + 1) % 24 == 0) {
+            if (($number + 1) % 21 == 0) {
                 $y = 926;
                 $col++;
             }
         }
 
-        $point = new oq_point(1572, 2639);
+        $point = new oq_point(1572, 2459);
+        $this->hotspots["page"] = $point;
+
+    }
+
+    /**
+     * Initialises all the hotspots to be checked.
+     *
+     */
+    public function init_hotspots2() {
+        global $CFG;
+
+        $this->hotspots = array();
+        $offlinequizconfig = get_config('offlinequiz');
+
+        // Load hotspots for usernumber.
+        for ($x = 0; $x <= ($offlinequizconfig->ID_digits - 1); $x++) {
+            for ($y = 0; $y <= 9; $y++) {
+                $point = new oq_point(($x * 65) + 1247, ($y * 60) + 306);
+                $this->hotspots["u$x$y"] = $point;
+            }
+        }
+
+        // Load hotspots for group.
+        for ($i = 0; $i <= 5; $i++) {
+            $point = new oq_point(($i * 95) + 274, 440);
+            $this->hotspots["g$i"] = $point;
+        }
+
+        $point = new oq_point(436, 804);          // The black box in the middle.
+        $this->hotspots['deleted'] = $point;       // To check if we grabbed it right and to get upper trigger and papergray..
+
+        $point = new oq_point(436, 640);          // The box with the cross in the middle.
+        $this->hotspots['cross'] = $point;         // To get lower trigger.
+
+        switch ($this->formtype) {                // Load hotspots for answers.
+            case 1:
+                $colwidth = 26 * 65;
+                break;
+            case 2:
+                $colwidth = 14 * 65;
+                break;
+            case 3:
+                $colwidth = 9 * 65;
+                break;
+            case 4:
+                $colwidth = 7 * 65;
+                break;
+            default:
+                error('Missing type for form');
+        }
+
+        $col = 0;
+        $y = 926;
+
+        for ($number = 0; $number < $this->formtype * 21; $number++) {
+
+            if (($number + 84) % 8 == 0) {
+                $y += 44;
+            }
+
+            for ($i = 0; $i < $this->maxanswers; $i++) {
+                $point = new oq_point(($i * 65) + ($colwidth * $col) + 84, $y);
+                $this->hotspots["a-$number-$i"] = $point;
+            }
+            $y += 65;
+
+            if (($number + 1) % 21 == 0) {
+                $y = 926;
+                $col++;
+            }
+        }
+
+        $point = new oq_point(1572, 2459);
         $this->hotspots["page"] = $point;
 
     }
@@ -701,10 +774,17 @@ class offlinequiz_page_scanner {
             return 0;
         }
 
-        if ($this->page * $this->formtype * 24 < $this->maxquestions) {
-            $this->questionsonpage = $this->formtype * 24;
+        if ($this->page * $this->formtype * 21 < $this->maxquestions) {
+            $this->questionsonpage = $this->formtype * 21;
         } else {
-            $this->questionsonpage = $this->maxquestions - ($this->formtype * 24 * ($this->page - 1));
+            $this->questionsonpage = $this->maxquestions - ($this->formtype * 21 * ($this->page - 1));
+        }
+
+        if ($this->page == 2) {
+            $this->init_hotspots2();
+            $this->move_hotspots();
+            $this->adjust_hotspots();
+            $this->init_pattern();
         }
 
         return $this->page;
@@ -723,10 +803,10 @@ class offlinequiz_page_scanner {
             return 0;
         }
 
-        if ($this->page * $this->formtype * 24 < $this->maxquestions) {
-            $this->questionsonpage = $this->formtype * 24;
+        if ($this->page * $this->formtype * 21 < $this->maxquestions) {
+            $this->questionsonpage = $this->formtype * 21;
         } else {
-            $this->questionsonpage = $this->maxquestions - ($this->formtype * 24 * ($this->page - 1));
+            $this->questionsonpage = $this->maxquestions - ($this->formtype * 21 * ($this->page - 1));
         }
 
         return $this->page;
@@ -1619,7 +1699,7 @@ class offlinequiz_page_scanner {
             $this->formtype = 1;
         }
 
-        $this->numpages = ceil($this->maxquestions / ($this->formtype * 24));
+        $this->numpages = ceil($this->maxquestions / ($this->formtype * 21));
 
         $this->init_hotspots();
 

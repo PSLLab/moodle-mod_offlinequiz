@@ -226,12 +226,12 @@ class offlinequiz_answer_pdf extends offlinequiz_pdf {
     public function Footer() {
         $letterstr = ' ABCDEF';
 
-        $this->Line(11, 285, 14, 285);
-        $this->Line(12.5, 283.5, 12.5, 286.5);
-        $this->Line(193, 285, 196, 285);
-        $this->Line(194.5, 283.5, 194.5, 286.5);
-        $this->Rect(192, 282.5, 2.5, 2.5, 'F');                // Flip indicator.
-        $this->Rect(15, 281, 174, 0.5, 'F');                   // Bold line on bottom.
+        $this->Line(11, 267, 14, 267);
+        $this->Line(12.5, 265.5, 12.5, 268.5);
+        $this->Line(193, 267, 196, 267);
+        $this->Line(194.5, 265.5, 194.5, 268.5);
+        $this->Rect(192, 264.5, 2.5, 2.5, 'F');                // Flip indicator.
+        $this->Rect(15, 263, 174, 0.5, 'F');                   // Bold line on bottom.
 
         // Position at x mm from bottom.
         $this->SetY(-20);
@@ -420,7 +420,7 @@ function offlinequiz_create_pdf_question(question_usage_by_activity $templateusa
 
     $coursecontext = context_course::instance($courseid);
 
-    $pdf = new offlinequiz_question_pdf('P', 'mm', 'A4');
+    $pdf = new offlinequiz_question_pdf('P', 'mm', 'LETTER');
     $trans = new offlinequiz_html_translator();
 
     $title = offlinequiz_str_html_pdf($offlinequiz->name);
@@ -854,7 +854,7 @@ function offlinequiz_create_pdf_answer($maxanswers, $templateusage, $offlinequiz
 
     $texfilter = new filter_tex($context, array());
 
-    $pdf = new offlinequiz_answer_pdf('P', 'mm', 'A4');
+    $pdf = new offlinequiz_answer_pdf('P', 'mm', 'LETTER');
     $title = offlinequiz_str_html_pdf($offlinequiz->name);
     if (!empty($offlinequiz->time)) {
         $title = $title . ": " . offlinequiz_str_html_pdf(userdate($offlinequiz->time));
@@ -969,7 +969,7 @@ function offlinequiz_create_pdf_answer($maxanswers, $templateusage, $offlinequiz
         $pdf->Ln(6.5);
 
         // Switch to next column if necessary.
-        if (($number + 1) % 24 == 0) {
+        if (($number + 1) % 21 == 0) {
             $pdf->SetY($offsety);
             $col++;
             // Do a pagebreak if necessary.
@@ -1065,7 +1065,7 @@ function offlinequiz_create_pdf_participants($offlinequiz, $courseid, $list, $co
         return false;
     }
 
-    $pdf = new offlinequiz_participants_pdf('P', 'mm', 'A4');
+    $pdf = new offlinequiz_participants_pdf('P', 'mm', 'LETTER');
     $pdf->listno = $list->number;
     $title = offlinequiz_str_html_pdf($offlinequiz->name);
     // Add the list name to the title.
