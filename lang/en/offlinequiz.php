@@ -299,7 +299,7 @@ $string['missingquestion'] = 'This question no longer seems to exist';
 $string['missinguserid'] = 'Missing user identification number! Could not read barcode!';
 $string['modulename_help'] = 'This module allows the teacher to design offline quizzes consisting of multiple choice questions.
 These questions are kept in the Moodle question bank and can be re-used within courses and even between courses.
-The offline quizzes can be downloaded as PDF files. The students mark their answers on form sheets. The form sheets are scanned and the answers imported into the system.';
+The offline quizzes can be downloaded as PDF-, DOCX- or LaTeX-files. The students mark their answers on form sheets. The form sheets are scanned and the answers imported into the system.';
 $string['moveselectedonpage'] = 'Move selected questions to page: {$a}';
 $string['copyselectedtogroup'] = 'Add selected questions to group: {$a}';
 $string['copytogroup'] = 'Add all questions to group: {$a}';
@@ -582,6 +582,7 @@ $string['scanneroptions'] = 'Scanner settings';
 $string['scannerpdfs'] = 'Empty forms';
 $string['scannerpdfstext'] = 'Download the following empty forms if you want to use your own scanner software.';
 $string['score'] = 'Score';
+$string['search:activity'] = 'Offline quiz - activity information';
 $string['select'] = 'Select';
 $string['selectagroup'] = 'Select a group';
 $string['selectall'] = 'Select all';
@@ -593,6 +594,7 @@ $string['selectdifferentgroup'] = 'Please select a different group!';
 $string['selectformat'] = 'Select format...';
 $string['selectgroup'] = 'Select group';
 $string['selectlist'] = 'Please select a list or try to readjust sheet:';
+$string['selectmultipletoolbar'] = 'Select multiple toolbar';
 $string['selectpage'] = 'Please select page number or try to readjust sheet:';
 $string['showallparts'] = 'Show all {$a} participants';
 $string['showcopyright'] = 'Show copyright statement';

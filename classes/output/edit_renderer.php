@@ -125,8 +125,6 @@ class edit_renderer extends \plugin_renderer_base {
 
             // Include the question chooser.
             $output .= $this->question_chooser();
-
-
         }
 
         return $output;
@@ -174,7 +172,9 @@ class edit_renderer extends \plugin_renderer_base {
             $output .= $this->start_section($section);
             $questionhtml = '';
             foreach ($structure->get_questions_in_section($section->id) as $question) {
-                $questionhtml .=  $this->question_row_for_grading($structure, $question, $contexts, $pagevars, $pageurl);
+                if ($question->qtype != 'description') {
+                    $questionhtml .=  $this->question_row_for_grading($structure, $question, $contexts, $pagevars, $pageurl);
+                }
             }
             $output .= html_writer::tag('ul', $questionhtml, array('class' => 'section img-text'));
             $output .= $this->end_section();
@@ -213,7 +213,7 @@ class edit_renderer extends \plugin_renderer_base {
             $copyingdisabled = 'disabled="disabled"';
         }
         $output = get_string('copyselectedtogroup', 'offlinequiz', $select) .
-            '<input type="submit" name="savechanges" value="' . get_string('add') .
+            '<input class="btn btn-secondary" type="submit" name="savechanges" value="' . get_string('add') .
             '" ' . $copyingdisabled . '/>';
         return html_writer::div($output, 'copyselected');
     }
@@ -235,7 +235,7 @@ class edit_renderer extends \plugin_renderer_base {
 
     private function end_grading_form() {
 
-        $output = '<center><input type="submit" class="bulksubmitbutton" value="' .
+        $output = '<center><input type="submit" class="bulksubmitbutton btn btn-primary" value="' .
                 get_string('bulksavegrades', 'offlinequiz') . '" name="bulkgradesubmit" /></center>
                 </form>';
         return $output;
@@ -333,8 +333,10 @@ class edit_renderer extends \plugin_renderer_base {
                 'value' => offlinequiz_format_grade($offlinequiz, $offlinequiz->grade)));
         $output .= html_writer::tag('label', get_string('maximumgradex', '', $a),
                 array('for' => 'inputmaxgrade'));
-        $output .= html_writer::empty_tag('input', array('type' => 'submit',
-                'name' => 'savechanges', 'value' => get_string('save', 'offlinequiz')));
+        $output .= html_writer::start_tag('button', array('type' => 'submit',
+                'name' => 'savechanges', 'value' => 'true', 'class' => 'btn btn-secondary savechanges'));
+        $output .= get_string('save', 'offlinequiz');
+        $output .= html_writer::end_tag('button');
         $output .= html_writer::end_tag('fieldset');
         $output .= html_writer::end_tag('form');
         $output .= html_writer::end_tag('div');
@@ -363,6 +365,7 @@ class edit_renderer extends \plugin_renderer_base {
             'name'  => 'repaginate',
             'id'    => 'repaginatecommand',
             'value' => get_string('repaginatecommand', 'offlinequiz'),
+            'class' => 'btn btn-secondary'
         );
         if (!$structure->can_be_repaginated()) {
             $buttonoptions['disabled'] = 'disabled';
@@ -409,18 +412,26 @@ class edit_renderer extends \plugin_renderer_base {
         $output = '';
 
         if ($structure->can_be_edited()) {
-
-//             $output .= '<input type="checkbox" id="sall" name="sall" ' .
-//                ' onClick="javascript:if (this.checked){deselect_all_in(\'FORM\', null, \'offlinequizbulkcopyform\'); this.checked = null} else {select_all_in(\'FORM\', null, \'offlinequizbulkcopyform\');}">';
-//             $output .= get_string('selectall', 'offlinequiz');
-            $output .= '<br/>';
-            $output .= html_writer::start_div('selectall');
-            $output .= '<a href="javascript:select_all_in(\'FORM\', null, ' . '\'offlinequizbulkcopyform\');" >' .
-                        get_string('selectall', 'offlinequiz') . '</a> /';
-            $output .=    ' <a href="javascript:deselect_all_in(\'FORM\', ' .
-                    'null, \'offlinequizbulkcopyform\');">' .
-                    get_string('selectnone', 'offlinequiz') . '</a>';
-            $output .= html_writer::end_div();
+        	$toolbaroptions = array(
+        			'class' => 'btn-toolbar',
+        			'role' => 'toolbar',
+        			'aria-label' => get_string('selectmultipletoolbar', 'offlinequiz'),
+        	);
+        	// Select all/deselect all questions.
+        	$buttonselectalloptions = array(
+        			'role' => 'button',
+        			'class' => 'btn btn-link selectall'
+        	);
+        	$buttondeselectalloptions = array(
+        			'role' => 'button',
+        			'class' => 'btn btn-link deselectall'
+        	);
+        	$output .= html_writer::tag('div',
+        			html_writer::tag('div',
+        					html_writer::link('#', get_string('selectall', 'quiz'), $buttonselectalloptions) .
+        					html_writer::link('#', get_string('selectnone', 'quiz'), $buttondeselectalloptions),
+        					array('class' => 'btn-group selectmultiplecommandbuttons')),
+        			$toolbaroptions);
         }
         return $output;
     }
@@ -436,7 +447,8 @@ class edit_renderer extends \plugin_renderer_base {
             'name'  => 'offlinequizdeleteselected',
             'id'    => 'removeselectedcommand',
             'onClick' => 'return confirm(\'' .  get_string('areyousureremoveselected', 'offlinequiz') . '\');',
-            'value' => get_string('removeselected', 'offlinequiz')
+            'value' => get_string('removeselected', 'offlinequiz'),
+            'class' => 'btn btn-secondary'
         );
 
         if (!$structure->can_be_edited()) {
@@ -625,12 +637,14 @@ class edit_renderer extends \plugin_renderer_base {
     public function page_row(structure $structure, $question, $contexts, $pagevars, $pageurl) {
         $output = '';
 
+        $slot = $question->slot;
+
+        $pagenumber = $structure->get_page_number_for_slot($slot);
+
         // Put page in a span for easier styling.
-        $page = html_writer::tag('span', get_string('page') . ' ' . $question->page,
-                array('class' => 'text'));
+        $page = $this->heading(get_string('page') . ' ' . $pagenumber, 4);
 
-
-        if ($structure->is_first_slot_on_page($question->slot)) {
+        if ($structure->is_first_slot_on_page($slot)) {
             // Add the add-menu at the page level.
             $addmenu = html_writer::tag('span', $this->add_menu_actions($structure,
                     $question->page, $pageurl, $contexts, $pagevars),
@@ -640,7 +654,7 @@ class edit_renderer extends \plugin_renderer_base {
                     $question->page, $pageurl, $pagevars);
 
             $output .= html_writer::tag('li', $page . $addmenu . $addquestionform,
-                    array('class' => 'pagenumber activity yui3-dd-drop page', 'id' => 'page-' . $question->page));
+                    array('class' => 'pagenumber activity yui3-dd-drop page', 'id' => 'page-' . $pagenumber));
         }
 
         return $output;
@@ -870,9 +884,14 @@ class edit_renderer extends \plugin_renderer_base {
 
         // Action icons.
         $questionicons = '';
-        $input = '<input class="gradeinput" id="inputq' . $question->id .
-                '" type="text" value="' . offlinequiz_format_grade($structure->get_offlinequiz(), $question->maxmark) .
-                '" size="4" tabindex="' . $question->slot . '" name="g' . $question->id . '"/>';
+        if($question->qtype == 'description') {
+            $input = '';
+        }
+        else {
+            $input = '<input class="gradeinput" id="inputq' . $question->id .
+            '" type="text" value="' . offlinequiz_format_grade($structure->get_offlinequiz(), $question->maxmark) .
+            '" size="4" tabindex="' . $question->slot . '" name="g' . $question->id . '"/>';
+        }
         $questionicons .=  html_writer::span($input,
                 'instancemaxmark decimalplaces_' . offlinequiz_get_grade_format($structure->get_offlinequiz()));
 //        $questionicons .= $this->marked_out_of_field($structure->get_offlinequiz(), $question);
@@ -888,7 +907,7 @@ class edit_renderer extends \plugin_renderer_base {
 
 
     private function question_checkbox($question) {
-         $checkbox = '<input id="s' . $question->id . '" type="checkbox" name="s' .
+         $checkbox = '<input class="select-multiple-checkbox" id="s' . $question->id . '" type="checkbox" name="s' .
                 $question->id . '"/>';
          return html_writer::span($checkbox, 'question_checkbox');
     }
@@ -984,11 +1003,11 @@ class edit_renderer extends \plugin_renderer_base {
 
         if ($insertpagebreak) {
             $title = get_string('addpagebreak', 'offlinequiz');
-            $image = $this->pix_icon('e/insert_page_break', $title);
+            $image = $this->image_icon('e/insert_page_break', $title);
             $action = 'addpagebreak';
         } else {
             $title = get_string('removepagebreak', 'offlinequiz');
-            $image = $this->pix_icon('e/remove_page_break', $title);
+            $image = $this->image_icon('e/remove_page_break', $title);
             $action = 'removepagebreak';
         }
 
@@ -1144,7 +1163,7 @@ class edit_renderer extends \plugin_renderer_base {
      */
     public function question_bank_loading() {
         return html_writer::div(html_writer::empty_tag('img',
-                array('alt' => 'loading', 'class' => 'loading-icon', 'src' => $this->pix_url('i/loading'))),
+                array('alt' => 'loading', 'class' => 'loading-icon', 'src' => $this->image_url('i/loading'))),
                 'questionbankloading');
     }
 
