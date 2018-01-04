@@ -899,10 +899,10 @@ class offlinequiz_page_scanner {
 
     /**
      * Determines the black value of a hotspot.
-     * Returns 
-     *    0 if empty, 
-     *    1 if marked, 
-     *    2 if deleted, 
+     * Returns
+     *    0 if empty,
+     *    1 if marked,
+     *    2 if deleted,
      *    3 if insecure.
      * If return is true, it returns the percentage of black pixels found
      *
