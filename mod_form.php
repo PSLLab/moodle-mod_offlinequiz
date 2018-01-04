@@ -180,6 +180,10 @@ class mod_offlinequiz_mod_form extends moodleform_mod {
         $mform->addElement('select', 'showquestioninfo', get_string("showquestioninfo", "offlinequiz"), $options, $attribs);
         $mform->addHelpButton('showquestioninfo', "showquestioninfo", "offlinequiz");
 
+        $mform->addElement('selectyesno', 'disableimgnewlines', get_string("disableimgnewlines", "offlinequiz"), $attribs);
+        $mform->addHelpButton('disableimgnewlines', 'disableimgnewlines', 'offlinequiz');
+        $mform->setDefault('disableimgnewlines', $offlinequizconfig->disableimgnewlines);
+
         // -------------------------------------------------------------------------------
         $mform->addElement('header', 'reviewoptionshdr', get_string("reviewoptions", "offlinequiz"));
         $mform->addHelpButton('reviewoptionshdr', 'reviewoptions', 'offlinequiz');
@@ -217,7 +221,7 @@ class mod_offlinequiz_mod_form extends moodleform_mod {
 
         $language = current_language();
 
-        $mform->addElement('html', '<input id="showviewbutton" type="button" value="'.
+        $mform->addElement('html', '<input id="showviewbutton" type="button" class="btn btn-secondary" value="'.
                 get_string('showstudentview', 'offlinequiz') . '" onClick="showStudentView(); return false;">');
         $mform->addElement('html', '<div class="Popup"><center><input type="button" class="closePopup"' .
                 ' onClick="closePopup(); return false;" value="' . get_string('closestudentview', 'offlinequiz') .
