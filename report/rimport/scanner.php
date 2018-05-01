@@ -225,7 +225,7 @@ class offlinequiz_page_scanner {
         $col = 0;
         $y = 926;
 
-        for ($number = 0; $number < $this->formtype * 24; $number++) {
+        for ($number = 0; $number < $this->formtype * 21; $number++) {
 
             if ($number % 8 == 0) {
                 $y += 44;
