@@ -242,7 +242,7 @@ function offlinequiz_check_scanned_page($offlinequiz, offlinequiz_page_scanner $
                 $qinstances = $DB->get_records_sql($sql,
                         array('offlinequizid' => $offlinequiz->id,
                               'offlinegroupid' => $group->id));
- 
+
                 // Clone it...
                 $quba = $templateusage->get_clone($qinstances);
 
@@ -748,7 +748,7 @@ function offlinequiz_get_question_numbers($offlinequiz, $groups) {
     }
 
     // Determine how many questions are on a full page.
-    $questionsperpage = 96;
+    $questionsperpage = 84;
     if ($maxanswers > 5) {
         $questionsperpage = 72;
     }
