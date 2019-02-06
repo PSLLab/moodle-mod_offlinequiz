@@ -69,6 +69,8 @@ class PHPWord_Numbering_AbstractNumbering {
     public function addLevel(PHPWord_Numbering_Level &$level) {
         if (is_array($this->_levels)) {
           $currentMaxLevel = count($this->_levels);
+        } elseif (is_null($this->_levels)) {
+          $currentMaxLevel = 0;
         } else {
           $currentMaxLevel = 1;
         }
