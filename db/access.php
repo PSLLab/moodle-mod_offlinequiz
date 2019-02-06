@@ -26,6 +26,8 @@
  *
  **/
 
+defined('MOODLE_INTERNAL') || die();
+
 $capabilities = array(
     // The standard capability mod/offlinequiz:addinstance.
     'mod/offlinequiz:addinstance' => array(
@@ -119,6 +121,14 @@ $capabilities = array(
         'legacy' => array(
             'editingteacher' => CAP_ALLOW,
             'manager' => CAP_ALLOW
+        )
+    ),
+    // Change the way how answer sheets are evaluated.
+    'mod/offlinequiz:changeevaluationmode' => array(
+
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'legacy' => array(
         )
     )
 );

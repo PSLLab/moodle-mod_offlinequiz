@@ -54,8 +54,6 @@ class mod_offlinequiz_mod_form extends moodleform_mod {
         // -------------------------------------------------------------------------------
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
-        $mform->addElement('html', '<center>' . get_string('pluginname', 'offlinequiz') . '</center>');
-
         if ($offlinequiz && $offlinequiz->docscreated) {
             $mform->addElement('html', "<center><a href=\"" . $CFG->wwwroot .
                     "/mod/offlinequiz/createquiz.php?mode=createpdfs&amp;q=$offlinequiz->id\">" .
@@ -124,7 +122,17 @@ class mod_offlinequiz_mod_form extends moodleform_mod {
         $mform->addElement('select', 'decimalpoints', get_string('decimalplaces', 'offlinequiz'), $options);
         $mform->addHelpButton('decimalpoints', 'decimalplaces', 'offlinequiz');
         $mform->setDefault('decimalpoints', $offlinequizconfig->decimalpoints);
-
+        $hasevalationrights=false;
+        if($offlinequiz) {
+            $cm = get_coursemodule_from_instance("offlinequiz", $offlinequiz->id, $offlinequiz->course);
+            $context = context_module::instance($cm->id);
+            $hasevalationrights = $offlinequizconfig->experimentalevaluation && has_capability('mod/offlinequiz:changeevaluationmode', $context);
+        }
+        if(is_siteadmin() || $hasevalationrights) {
+                $mform->addElement('selectyesno', 'experimentalevaluation', get_string('experimentalevaluation', 'offlinequiz'));
+                $mform->addHelpButton('experimentalevaluation', 'experimentalevaluation', 'offlinequiz');
+                $mform->setDefault('experimentalevaluation', 0);
+        }
         // -------------------------------------------------------------------------
         $mform->addElement('header', 'layouthdr', get_string('formsheetsettings', 'offlinequiz'));
 
@@ -184,7 +192,7 @@ class mod_offlinequiz_mod_form extends moodleform_mod {
         $mform->addElement('selectyesno', 'disableimgnewlines', get_string("disableimgnewlines", "offlinequiz"), $attribs);
         $mform->addHelpButton('disableimgnewlines', 'disableimgnewlines', 'offlinequiz');
         $mform->setDefault('disableimgnewlines', $offlinequizconfig->disableimgnewlines);
-
+        
         // -------------------------------------------------------------------------------
         $mform->addElement('header', 'reviewoptionshdr', get_string("reviewoptions", "offlinequiz"));
         $mform->addHelpButton('reviewoptionshdr', 'reviewoptions', 'offlinequiz');

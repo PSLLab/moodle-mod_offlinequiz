@@ -374,8 +374,15 @@ function offlinequiz_process_scanned_page($offlinequiz, offlinequiz_page_scanner
                     $choice->value = -1;
                     $insecuremarkings = true;
                 }
-                // We really want to save every single cross  in the database.
-                $choice->id = $DB->insert_record('offlinequiz_choices', $choice);
+                $oldchoice = $DB->get_record('offlinequiz_choices', ['slotnumber' => $choice->slotnumber, 'choicenumber' => $choice->choicenumber, 'scannedpageid' => $choice->scannedpageid]);
+                if(isset($oldchoice->id)) {
+                    $choice->id = $oldchoice->id;
+                    $DB->update_record('offlinequiz_choices', $choice);
+                }
+                else {
+                    // We really want to save every single cross  in the database.
+                    $choice->id = $DB->insert_record('offlinequiz_choices', $choice);
+                }
                 $choicesdata[$slot][$key] = $choice;
             }
         } // End for (slot...
@@ -462,7 +469,7 @@ function offlinequiz_submit_scanned_page($offlinequiz, $scannedpage, $choicesdat
             $quba->finish_question($slot, time());
         }
 
-    } // End for ($slotindex...
+    } // End for slotindex.
 
     question_engine::save_questions_usage_by_activity($quba);
 
@@ -765,7 +772,7 @@ function offlinequiz_get_question_numbers($offlinequiz, $groups) {
 
 // O=======================================================================.
 // O=======================================================================.
-//  Functions for lists of participants.
+// Functions for lists of participants.
 // O=======================================================================.
 // O=======================================================================.
 /**

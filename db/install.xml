@@ -34,6 +34,8 @@
         <FIELD NAME="showtutorial" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="id_digits" TYPE="int" LENGTH="4" NOTNULL="false" SEQUENCE="false" COMMENT="Amount of digits used by offlinequiz-instance to match idnumbers"/>
         <FIELD NAME="disableimgnewlines" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Enable or disable new lines around images"/>
+        <FIELD NAME="algorithmversion" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="version of the evaluation algorithm"/>
+        <FIELD NAME="experimentalevaluation" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for offlinequiz"/>
@@ -115,6 +117,8 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="scannedpageid" UNIQUE="false" FIELDS="scannedpageid"/>
+        <INDEX NAME="slotnumber" UNIQUE="false" FIELDS="slotnumber"/>
+        <INDEX NAME="choicenumber" UNIQUE="false" FIELDS="choicenumber"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="offlinequiz_page_corners" COMMENT="Contains the four corners for every page in offlinequiz_scanned_pages.">

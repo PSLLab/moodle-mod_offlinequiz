@@ -55,7 +55,7 @@ class add_action_column extends \core_question\bank\action_column_base {
         } else {
             echo '<span class="greyed">';
         }
-        echo '<img src="' . $OUTPUT->pix_url($icon) . '" class="iconsmall" alt="' . $title . '" />';
+        echo $OUTPUT->pix_icon($icon,'');
         if (!$disabled) {
             echo '</a>';
         } else {
@@ -69,7 +69,7 @@ class add_action_column extends \core_question\bank\action_column_base {
         }
         $disabled = false;
         if ($this->qbank->offlinequiz_contains($question->id)) {
-            $disabled = true; 
+            $disabled = true;
         }
         $this->print_icon('t/add', $this->stradd, $this->qbank->add_to_offlinequiz_url($question->id), $disabled);
     }
