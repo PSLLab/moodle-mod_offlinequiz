@@ -26,8 +26,8 @@
  *
  */
 
-define("A3_WIDTH", "2160");                    // Paper size.
-define("A3_HEIGHT", "2790");
+define("A3_WIDTH", "2159");                    // Paper size.
+define("A3_HEIGHT", "2794");
 define("LAYER_WIDTH", "1815");                 // Active layer from corner cross to corner cross.
 define("LAYER_HEIGHT", "2553");
 
