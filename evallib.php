@@ -152,6 +152,11 @@ function offlinequiz_check_scanned_page($offlinequiz, offlinequiz_page_scanner $
         }
         $page = $scannedpage->pagenumber;
 
+        // Prevent SMALLINT overflow on misread barcode
+        if ($scannedpage->pagenumber > 32760) {
+            $scannedpage->pagenumber = null;
+        }
+
         if ($scannedpage->status == 'ok' || $scannedpage->status == 'suspended') {
             if ($page < 1 || $page > $group->numberofpages) {
                 $scannedpage->status = 'error';
