@@ -28,6 +28,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
+    global $DB;
     require_once($CFG->dirroot.'/mod/offlinequiz/lib.php');
     require_once($CFG->dirroot.'/mod/offlinequiz/settingslib.php');
 
@@ -111,6 +112,9 @@ if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_configselect('offlinequiz/papergray', get_string('papergray', 'offlinequiz'),
             get_string('configpapergray', 'offlinequiz'), 670, $options));
 
+    $settings->add(new admin_setting_configtext('offlinequiz/blackwhitethreshold', get_string('blackwhitethreshold', 'offlinequiz'),
+            get_string('configblackwhitethreshold', 'offlinequiz'), '75', PARAM_INT));
+
     $settings->add(new admin_setting_heading('correctionheading',
             get_string('correctionoptionsheading', 'offlinequiz'), ''));
 
@@ -138,6 +142,7 @@ if ($ADMIN->fulltree) {
 
     $settings->add(new admin_setting_configtext('offlinequiz/keepfilesfordays', get_string('keepfilesfordays', 'offlinequiz'),
              get_string('configkeepfilesfordays', 'offlinequiz'), 8, PARAM_INT));
-    $settings->add(new admin_setting_configcheckbox('offlinequiz/experimentalevaluation', get_string('configexperimentalevaluation','offlinequiz'),
-            get_string('configexperimentalevaluationdesc','offlinequiz'), 0));
+    $settings->add(new admin_setting_configcheckbox('offlinequiz/experimentalevaluation',
+            get_string('configexperimentalevaluation', 'offlinequiz'),
+            get_string('configexperimentalevaluationdesc', 'offlinequiz'), 0));
 }

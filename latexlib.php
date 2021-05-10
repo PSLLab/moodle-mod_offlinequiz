@@ -49,7 +49,7 @@ function offlinequiz_create_latex_question(question_usage_by_activity $templateu
     global $CFG, $DB, $OUTPUT;
 
     $letterstr = 'abcdefghijklmnopqrstuvwxyz';
-    $groupletter = strtoupper($letterstr[$group->number - 1]);
+    $groupletter = strtoupper($letterstr[$group->groupnumber - 1]);
 
     $coursecontext = context_course::instance($courseid);
     $course = $DB->get_record('course', array('id' => $courseid));
@@ -169,7 +169,11 @@ function offlinequiz_create_latex_question(question_usage_by_activity $templateu
     $a['latexforquestions'] = $latexforquestions;
     $a['coursename'] = offlinequiz_convert_html_to_latex($course->fullname);
     $a['groupname'] = $groupletter;
-    $a['pdfintrotext'] = offlinequiz_convert_html_to_latex(get_string('pdfintrotext', 'offlinequiz', $a));
+    if (empty($offlinequiz->pdfintro)) {
+        $a['pdfintrotext'] = offlinequiz_convert_html_to_latex(get_string('pdfintrotext', 'offlinequiz', $a));
+    } else {
+        $a['pdfintrotext'] = offlinequiz_convert_html_to_latex($offlinequiz->pdfintro);
+    }
     if ($offlinequiz->time) {
         $a['date'] = ', ' . userdate($offlinequiz->time);
     } else {
@@ -274,7 +278,7 @@ function offlinequiz_convert_html_to_latex_tables($dom) {
         $rows = $element->getElementsByTagName('tr');
         // TeX needs the number of columns.
         $cmax = 0;
-        $r=0;
+        $r = 0;
         foreach ($rows as $row) {
             $r++;
             foreach (array("td", "th") as $item) {
@@ -346,26 +350,26 @@ function offlinequiz_convert_html_to_latex($text) {
         }
           return $tmp;
     }, $text);
-    $conversiontable = array(
-    '&Amul;' => 'Ä',
-    '&auml;' => 'ä',
-    '&Ouml;' => 'Ö',
-    '&ouml;' => 'ö',
-    '&Uuml;' => 'Ü',
-    '&uuml;' => 'ü',
-    '&szlig;' => 'ß',
-    '&nbsp;' => '~',
-    '&amp;' => '\&',
-    '-amp-' => '&', // Undo ugly hack to prevent the dom parser from rewriting &.
-    '#' => '\#',
-    '%' => '\%',
-    '&gt;' => '>',
-    '&lt;' => '<',
-    '$' => '\$');
-    foreach ($conversiontable as $search => $replace) {
-         $text = str_ireplace($search, $replace, $text);
-    }
     $text = strip_tags($text);
+    $conversiontable = array(
+        '&Amul;' => 'Ä',
+        '&auml;' => 'ä',
+        '&Ouml;' => 'Ö',
+        '&ouml;' => 'ö',
+        '&Uuml;' => 'Ü',
+        '&uuml;' => 'ü',
+        '&szlig;' => 'ß',
+        '&nbsp;' => '~',
+        '&amp;' => '\&',
+        '-amp-' => '&', // Undo ugly hack to prevent the dom parser from rewriting &.
+        '#' => '\#',
+        '%' => '\%',
+        '&gt;' => '>',
+        '&lt;' => '<',
+        '$' => '\$');
+    foreach ($conversiontable as $search => $replace) {
+        $text = str_ireplace($search, $replace, $text);
+    }
     return trim($text);
 }
 

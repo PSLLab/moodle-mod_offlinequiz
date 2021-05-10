@@ -144,6 +144,34 @@ function offlinequiz_make_questions_usage_by_activity($component, $context) {
     return new offlinequiz_question_usage_by_activity($component, $context);
 }
 
+function get_course_objects($id, $q) {
+    global $DB;
+    if ($id) {
+        if (!$cm = get_coursemodule_from_id('offlinequiz', $id)) {
+            print_error("There is no coursemodule with id $id");
+        }
+        if (!$course = $DB->get_record("course", array('id' => $cm->course))) {
+            print_error("Course is misconfigured");
+        }
+        if (!$offlinequiz = $DB->get_record("offlinequiz", array('id' => $cm->instance))) {
+            print_error("The offlinequiz with id $cm->instance corresponding to this coursemodule $id is missing");
+        }
+
+    } else {
+        if (!$offlinequiz = $DB->get_record("offlinequiz", array('id' => $q))) {
+            print_error("There is no offlinequiz with id $q");
+        }
+        if (!$course = $DB->get_record("course", array('id' => $offlinequiz->course))) {
+            print_error("The course with id $offlinequiz->course that the offlinequiz with id $q belongs to is missing");
+        }
+        if (!$cm = get_coursemodule_from_instance('offlinequiz', $offlinequiz->id, $course->id)) {
+            print_error("The course module for the offlinequiz with id $q is missing");
+        }
+    }
+    return [$offlinequiz, $course, $cm];
+
+}
+
 /**
  * Load a {@link question_usage_by_activity} from the database, including
  * all its {@link question_attempt}s and all their steps.
@@ -241,11 +269,11 @@ function offlinequiz_get_empty_groups($offlinequiz) {
     $emptygroups = array();
 
     if ($groups = $DB->get_records('offlinequiz_groups',
-                                   array('offlinequizid' => $offlinequiz->id), 'number', '*', 0, $offlinequiz->numgroups)) {
+                                   array('offlinequizid' => $offlinequiz->id), 'groupnumber', '*', 0, $offlinequiz->numgroups)) {
         foreach ($groups as $group) {
             $questions = offlinequiz_get_group_question_ids($offlinequiz, $group->id);
             if (count($questions) < 1) {
-                $emptygroups[] = $group->number;
+                $emptygroups[] = $group->groupnumber;
             }
         }
     }
@@ -666,7 +694,7 @@ function offlinequiz_update_question_instance($offlinequiz, $questionid, $grade)
         $DB->set_field('offlinequiz_group_questions', 'maxmark', $grade, array('id' => $groupquestionid));
     }
 
-    $groups = $DB->get_records('offlinequiz_groups', array('offlinequizid' => $offlinequiz->id), 'number', '*', 0,
+    $groups = $DB->get_records('offlinequiz_groups', array('offlinequizid' => $offlinequiz->id), 'groupnumber', '*', 0,
                 $offlinequiz->numgroups);
 
     // Now change the maxmark of the question instance in the template question usages of the offlinequiz groups.
@@ -1056,7 +1084,7 @@ function offlinequiz_get_group($offlinequiz, $groupnumber) {
     global $DB;
 
     if (!$offlinequizgroup = $DB->get_record('offlinequiz_groups',
-                                              array('offlinequizid' => $offlinequiz->id, 'number' => $groupnumber))) {
+                                              array('offlinequizid' => $offlinequiz->id, 'groupnumber' => $groupnumber))) {
         if ($groupnumber > 0 && $groupnumber <= $offlinequiz->numgroups) {
             $offlinequizgroup = offlinequiz_add_group( $offlinequiz->id, $groupnumber);
         }
@@ -1077,7 +1105,7 @@ function offlinequiz_add_group($offlinequizid, $groupnumber) {
 
     $offlinequizgroup = new StdClass();
     $offlinequizgroup->offlinequizid = $offlinequizid;
-    $offlinequizgroup->number = $groupnumber;
+    $offlinequizgroup->groupnumber = $groupnumber;
 
     // Note: numberofpages and templateusageid will be filled later.
 
@@ -1469,7 +1497,7 @@ function offlinequiz_delete_template_usages($offlinequiz, $deletefiles = true) {
     global $CFG, $DB, $OUTPUT;
 
     if ($groups = $DB->get_records('offlinequiz_groups',
-                                   array('offlinequizid' => $offlinequiz->id), 'number', '*', 0, $offlinequiz->numgroups)) {
+                                   array('offlinequizid' => $offlinequiz->id), 'groupnumber', '*', 0, $offlinequiz->numgroups)) {
         foreach ($groups as $group) {
             if ($group->templateusageid) {
                 question_engine::delete_questions_usage_by_activity($group->templateusageid);
@@ -1560,8 +1588,7 @@ function offlinequiz_print_question_preview($question, $choiceorder, $number, $c
             // Remove all HTML comments (typically from MS Office).
             $answertext = preg_replace("/<!--.*?--\s*>/ms", "", $answertext);
             // Remove all paragraph tags because they mess up the layout.
-            $answertext = preg_replace("/<p[^>]*>/ms", "", $answertext);
-            $answertext = preg_replace("/<\/p[^>]*>/ms", "", $answertext);
+            $answertext = preg_replace( '/&lt;p&gt;(.+)<\/p>/Uuis', '$1', $answertext );
             // Rewrite image URLs.
             $answertext = question_rewrite_question_preview_urls($answertext, $question->id,
             $question->contextid, 'question', 'answer', $question->options->answers[$answer]->id,
@@ -1594,10 +1621,10 @@ function offlinequiz_print_partlist($offlinequiz, &$coursecontext, &$systemconte
     $checkoption = optional_param('checkoption', 0, PARAM_INT);
     $listid = optional_param('listid', '', PARAM_INT);
     $lists = $DB->get_records_sql("
-            SELECT id, number, name
+            SELECT id, listnumber, name
               FROM {offlinequiz_p_lists}
              WHERE offlinequizid = :offlinequizid
-          ORDER BY number ASC",
+          ORDER BY listnumber ASC",
             array('offlinequizid' => $offlinequiz->id));
 
     // First get roleids for students from leagcy.
@@ -1658,7 +1685,7 @@ function offlinequiz_print_partlist($offlinequiz, &$coursecontext, &$systemconte
     $table = new offlinequiz_partlist_table('mod-offlinequiz-participants', 'participants.php', $tableparams);
 
     // Define table columns.
-    $tablecolumns = array('checkbox', 'picture', 'fullname', $offlinequizconfig->ID_field, 'number', 'attempt', 'checked');
+    $tablecolumns = array('checkbox', 'picture', 'fullname', $offlinequizconfig->ID_field, 'listnumber', 'attempt', 'checked');
     $tableheaders = array('<input type="checkbox" name="toggle" class="select-all-checkbox"/>',
             '', get_string('fullname'), get_string($offlinequizconfig->ID_field), get_string('participantslist', 'offlinequiz'),
             get_string('attemptexists', 'offlinequiz'), get_string('present', 'offlinequiz'));
@@ -1842,7 +1869,7 @@ function offlinequiz_print_partlist($offlinequiz, &$coursecontext, &$systemconte
  * @param unknown_type $systemcontext
  */
 function offlinequiz_download_partlist($offlinequiz, $fileformat, &$coursecontext, &$systemcontext) {
-    global $CFG, $DB, $COURSE;
+    global $CFG, $DB;
 
     offlinequiz_load_useridentification();
     $offlinequizconfig = get_config('offlinequiz');
@@ -1886,82 +1913,31 @@ function offlinequiz_download_partlist($offlinequiz, $fileformat, &$coursecontex
                           get_string('attemptexists', 'offlinequiz'),
                           get_string('present', 'offlinequiz'));
 
-    if ($fileformat == 'ODS') {
-        require_once("$CFG->libdir/odslib.class.php");
+    if ($fileformat == 'ODS' || $fileformat == 'Excel') {
+        if ($fileformat == 'ODS') {
+            require_once("$CFG->libdir/odslib.class.php");
 
-        $filename .= ".ods";
-        // Creating a workbook.
-        $workbook = new MoodleODSWorkbook("-");
-        // Sending HTTP headers.
-        $workbook->send($filename);
-        // Creating the first worksheet.
-        $sheettitle = get_string('participants', 'offlinequiz');
-        $myxls = $workbook->add_worksheet($sheettitle);
-        // Format types.
-        $format = $workbook->add_format();
-        $format->set_bold(0);
-        $formatbc = $workbook->add_format();
-        $formatbc->set_bold(1);
-        $formatbc->set_align('center');
-        $formatb = $workbook->add_format();
-        $formatb->set_bold(1);
-        $formaty = $workbook->add_format();
-        $formaty->set_bg_color('yellow');
-        $formatc = $workbook->add_format();
-        $formatc->set_align('center');
-        $formatr = $workbook->add_format();
-        $formatr->set_bold(1);
-        $formatr->set_color('red');
-        $formatr->set_align('center');
-        $formatg = $workbook->add_format();
-        $formatg->set_bold(1);
-        $formatg->set_color('green');
-        $formatg->set_align('center');
+            $filename .= ".ods";
+            // Creating a workbook.
+            $workbook = new MoodleODSWorkbook("-");
+        } else {
+            require_once("$CFG->libdir/excellib.class.php");
 
-        // Print worksheet headers.
-        $colnum = 0;
-        foreach ($tableheaders as $item) {
-            $myxls->write(0, $colnum, $item, $formatbc);
-            $colnum++;
+            $filename .= ".xls";
+            // Creating a workbook.
+            $workbook = new MoodleExcelWorkbook("-");
         }
-        $rownum = 1;
-    } else if ($fileformat == 'Excel') {
-        require_once("$CFG->libdir/excellib.class.php");
-
-        $filename .= ".xls";
-        // Creating a workbook.
-        $workbook = new MoodleExcelWorkbook("-");
         // Sending HTTP headers.
         $workbook->send($filename);
         // Creating the first worksheet.
-        $sheettitle = get_string('participants', 'offlinequiz');
-        $myxls = $workbook->add_worksheet($sheettitle);
-        // Format types.
-        $format = $workbook->add_format();
-        $format->set_bold(0);
-        $formatbc = $workbook->add_format();
-        $formatbc->set_bold(1);
-        $formatbc->set_align('center');
-        $formatb = new StdClass();
-        $formatb = $workbook->add_format();
-        $formatb->set_bold(1);
-        $formaty = $workbook->add_format();
-        $formaty->set_bg_color('yellow');
-        $formatc = $workbook->add_format();
-        $formatc->set_align('center');
-        $formatr = $workbook->add_format();
-        $formatr->set_bold(1);
-        $formatr->set_color('red');
-        $formatr->set_align('center');
-        $formatg = $workbook->add_format();
-        $formatg->set_bold(1);
-        $formatg->set_color('green');
-        $formatg->set_align('center');
+
+        require(__DIR__ . '/sheetlib.php');
+        list($myxls, $formats) = offlinequiz_sheetlib_initialize_headers($workbook);
 
         // Print worksheet headers.
         $colnum = 0;
         foreach ($tableheaders as $item) {
-            $myxls->write(0, $colnum, $item, $formatbc);
+            $myxls->write(0, $colnum, $item, $formats['formatbc']);
             $colnum++;
         }
         $rownum = 1;
@@ -2003,7 +1979,7 @@ function offlinequiz_download_partlist($offlinequiz, $fileformat, &$coursecontex
             if ($fileformat == 'Excel' or $fileformat == 'ODS') {
                 $colnum = 0;
                 foreach ($row as $item) {
-                    $myxls->write($rownum, $colnum, $item, $format);
+                    $myxls->write($rownum, $colnum, $item, $formats['format']);
                     $colnum++;
                 }
                 $rownum++;

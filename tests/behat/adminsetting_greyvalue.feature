@@ -4,10 +4,7 @@ Feature: Within a moodle instance, an administrator should be able to set the va
   As an admin
   I need to default values for offline quiz settings.
 
-  @javascript
-  Scenario: Switch as an admin to the adminsettings of the module offlinequiz and change
-            the value of "White value of paper". Then login as a teacher and add a new offline quiz to
-            a course and check whether the default value has changed.
+  Background:
     Given the following "users" exist:
       | username | firstname | lastname | email |
       | teacher1 | Teacher | 1 | teacher1@example.com |
@@ -17,8 +14,11 @@ Feature: Within a moodle instance, an administrator should be able to set the va
     And the following "course enrolments" exist:
       | user | course | role |
       | teacher1 | C1 | editingteacher |
-    And I log in as "admin"
-    And I navigate to "Offline Quiz" node in "Site administration > Plugins > Activity modules"
+
+  @javascript
+  Scenario: Switch as an admin to the adminsettings of the module offlinequiz and change the value of "White value of paper". Then login as a teacher and add a new offline quiz to a course and check whether the default value has changed.
+    Given I log in as "admin"
+    And I navigate to "Plugins > Activity modules > Offline Quiz" in site administration
     And I set the field "White value of paper" to "Dark grey"
     And I press "Save changes"
     And I log out
@@ -29,6 +29,6 @@ Feature: Within a moodle instance, an administrator should be able to set the va
       | Offline quiz name | Test offline quiz name |
       | Description | Add an offline quiz to the current course |
     And I follow "Test offline quiz name"
-    And I navigate to "Edit settings" node in "Offline quiz administration"
+    And I navigate to "Edit settings" in current page administration
     And I expand all fieldsets
-    Then I should see "Dark grey"
+    Then the field "White value of paper" matches value "Dark grey"

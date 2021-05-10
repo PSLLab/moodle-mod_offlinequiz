@@ -27,7 +27,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-
 class offlinequiz_html_translator
 {
     private $tempfiles = array();
@@ -50,12 +49,10 @@ class offlinequiz_html_translator
     public function fix_image_paths($input, $contextid, $filearea, $itemid, $kfactor,
             $maxwidth, $disableimgnewlines, $format = 'pdf') {
         global $CFG, $DB;
-
         require_once($CFG->dirroot.'/filter/tex/lib.php');
         require_once($CFG->dirroot.'/filter/tex/latex.php');
         $file = null;
         $fs = get_file_storage();
-
         $output = $input;
         $strings = preg_split("/<img/i", $output);
         $output = array_shift($strings);
@@ -89,7 +86,6 @@ class offlinequiz_html_translator
                 $pluginfilename = $attributes['src'];
                 $imageurl = false;
                 $teximage = false;
-                $pluginfile = false;
                 $parts = preg_split("!$CFG->wwwroot/filter/tex/pix.php/!", $pluginfilename);
 
                 if (preg_match('!@@PLUGINFILE@@/!', $pluginfilename)) {
@@ -106,13 +102,13 @@ class offlinequiz_html_translator
                         $imagefilename = $imagefile->get_filename();
                         // Copy image content to temporary file.
                         $pathparts = pathinfo($imagefilename);
-                        $file = $CFG->dataroot . "/temp/offlinequiz/" . $unique . '.' . strtolower($pathparts["extension"]);
+                        $filetype = $pathparts["extension"];
+                        $file = $CFG->dataroot . "/temp/offlinequiz/" . $unique . '.' . strtolower($filetype);
                         clearstatcache();
                         if (!check_dir_exists($CFG->dataroot."/temp/offlinequiz", true, true)) {
                             print_error("Could not create data directory");
                         }
                         $imagefile->copy_content_to($file);
-                        $pluginfile = true;
                     } else {
                         $output .= 'Image file not found ' . $pathparts['dirname'] . '/' . $pathparts['basename'];
                     }
@@ -166,7 +162,6 @@ class offlinequiz_html_translator
                 }
 
                 $factor = 2; // Per default show images half sized.
-
                 if (!$imageurl) {
                     if (!file_exists($file)) {
                         $output .= get_string('imagenotfound', 'offlinequiz', $file);
@@ -229,10 +224,18 @@ class offlinequiz_html_translator
                         if ($filearea == 'answer' and $disableimgnewlines == 0) {
                             $output .= '<br/>';
                         }
-
-                        // Finally, add the image tag for tcpdf.
-                        $output .= '<img src="file://' . $file . '" align="middle" width="' . $width . '" height="' .
-                            $height .'"/>';
+                        $img = file_get_contents(
+                            $file);
+                        if ($format == 'pdf') {
+                            // Encode the image string data into base64.
+                            $data = base64_encode($img);
+                            // Finally, add the image tag for tcpdf.
+                            $output .= '<img src="@' . $data . '"';
+                        } else {
+                            $output .= '<img src="file://' . $file . '"';
+                        }
+                        $output .= ' align="middle" width="' . $width . '" height="' .
+                                $height .'"/>';
                     }
                 } else {
 

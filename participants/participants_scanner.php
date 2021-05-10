@@ -155,24 +155,18 @@ class offlinequiz_participants_scanner extends offlinequiz_page_scanner {
      * @return array of oq_points (upperleft, upperright, lowerleft, lowerright).
      */
     public function export_corners($width) {
-        global $CFG;
-
-        $export = array();
+        $corners = array();
         $factor = $width / imagesx($this->image);
+        $corners[0] = new oq_point(($this->upperleft->x) * $factor - 2 * $this->zoomx,
+            ($this->upperleft->y) * $factor - 2 * $this->zoomy);
+        $corners[1] = new oq_point(($this->upperright->x) * $factor - 2 * $this->zoomx,
+            ($this->upperright->y) * $factor - 2 * $this->zoomy);
+        $corners[2] = new oq_point(($this->lowerleft->x) * $factor - 2 * $this->zoomx,
+            ($this->lowerleft->y) * $factor - 2 * $this->zoomy);
+        $corners[3] = new oq_point(($this->lowerright->x) * $factor - 2 * $this->zoomx,
+            ($this->lowerright->y) * $factor - 2 * $this->zoomy);
+        return new mod_offlinequiz_corners($corners[0], $corners[1], $corners[2], $corners[3]);
 
-        $point = new oq_point(($this->upperleft->x) * $factor - 2 * $this->zoomx,
-                ($this->upperleft->y) * $factor - 2 * $this->zoomy);
-        $export[0] = $point;
-        $point = new oq_point(($this->upperright->x) * $factor - 2 * $this->zoomx,
-                ($this->upperright->y) * $factor - 2 * $this->zoomy);
-        $export[1] = $point;
-        $point = new oq_point(($this->lowerleft->x) * $factor - 2 * $this->zoomx,
-                ($this->lowerleft->y) * $factor - 2 * $this->zoomy);
-        $export[2] = $point;
-        $point = new oq_point(($this->lowerright->x) * $factor - 2 * $this->zoomx,
-                ($this->lowerright->y) * $factor - 2 * $this->zoomy);
-        $export[3] = $point;
-
-        return $export;
     }
+
 }

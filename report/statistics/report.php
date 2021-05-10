@@ -88,7 +88,7 @@ class offlinequiz_statistics_report extends offlinequiz_default_report {
         }
 
         if (!$groups = $DB->get_records('offlinequiz_groups',
-                array('offlinequizid' => $offlinequiz->id), 'number', '*', 0, $offlinequiz->numgroups)) {
+                array('offlinequizid' => $offlinequiz->id), 'groupnumber', '*', 0, $offlinequiz->numgroups)) {
             print_error('nogroups', 'offlinequiz', $CFG->wwwroot . '/course/view.php?id=' .
                 $COURSE->id, $scannedpage->offlinequizid);
         }
@@ -103,7 +103,7 @@ class offlinequiz_statistics_report extends offlinequiz_default_report {
             $pageoptions['offlinegroup'] = $groupnumber;
             $offlinequiz->groupnumber = $groupnumber;
             $offlinequiz->sumgrades = $DB->get_field('offlinequiz_groups', 'sumgrades',
-                    array('offlinequizid' => $offlinequiz->id, 'number' => $groupnumber));
+                    array('offlinequizid' => $offlinequiz->id, 'groupnumber' => $groupnumber));
 
             if ($offlinegroup = offlinequiz_get_group($offlinequiz, $groupnumber)) {
                 $offlinequiz->groupid = $offlinegroup->id;
@@ -259,6 +259,7 @@ class offlinequiz_statistics_report extends offlinequiz_default_report {
 
             if (!$questionid) {
                 $this->print_offlinequiz_group_selector($cm, $groups, $groupnumber, $pageoptions);
+                echo '<br/>';
                 if ($statmode == 'statsoverview' && ($offlinequiz->sumgrades == -1 || $differentquestions)) {
                     echo $OUTPUT->box_start();
                     $notificationmessage = get_string('remarks', 'offlinequiz_statistics') . ":<br />";
@@ -431,7 +432,7 @@ class offlinequiz_statistics_report extends offlinequiz_default_report {
         $prefix = get_string('statisticsforgroup', 'offlinequiz_statistics');
         $options[0] = get_string('allgroups', 'offlinequiz_statistics');
         foreach ($groups as $group) {
-            $options[$group->number] = $prefix . ' ' . $letterstr[$group->number - 1];
+            $options[$group->groupnumber] = $prefix . ' ' . $letterstr[$group->groupnumber - 1];
         }
         $urlparams = array('id' => $cm->id, 'mode' => 'statistics', 'statmode' => $pageoptions['statmode']);
         if (key_exists('offlinegroup', $pageoptions)) {
@@ -808,71 +809,14 @@ class offlinequiz_statistics_report extends offlinequiz_default_report {
                 if (empty($responsesdata)) {
                     $rowdata->part = $letterstr[$counter++] . ')';
                     $rowdata->response = $responseclass->responseclass;
-                    $rowdata->response = str_ireplace(array('<br />', '<br/>', '<br>', "\r\n"),
-                            array('', '', '', ''), $rowdata->response);
-                    $rowdata->fraction = $responseclass->fraction;
-                    $rowdata->count = 0;
-                    $classname = '';
-                    if ($rowdata->fraction > 0) {
-                        $classname = 'greenrow';
-                    } else if ($rowdata->fraction < 0) {
-                        $classname = 'redrow';
-                    }
-                    if ($counter2 == 0 && $partcounter == 0) {
-                        if ($this->table->is_downloading()) {
-                            $rowdata->name = format_text(strip_tags($question->questiontext), FORMAT_PLAIN);
-                            $rowdata->name = str_ireplace(array('<br />', '<br/>', '<br>', "\r\n"),
-                                    array('', '', '', ''), $rowdata->name);
-                        } else {
-                            $rowdata->name = format_text(html_to_text($question->questiontext));
-                        }
-                    } else {
-                        $rowdata->name = '';
-                    }
-
-                    $rowdata->s = '';
-                    $rowdata->facility = '';
-                    $rowdata->sd = '';
-                    $rowdata->intended_weight = '';
-                    $rowdata->effective_weight = '';
-                    $rowdata->discrimination_index = '';
-                    $this->table->add_data_keyed($this->table->format_row($rowdata), $classname);
+                    $this->output_response_data($rowdata, $responseclass->responseclass, 0, $letterstr, $counter, $counter2, $partcounter, $question);
                     $partcounter++;
                     continue;
                 } else {
                     foreach ($responsesdata as $response => $data) {
                         $rowdata->response = $response;
-                        $rowdata->response = str_ireplace(array('<br />', '<br/>', '<br>', "\r\n"),
-                                array('', '', '', ''), $rowdata->response);
-                        $rowdata->fraction = $data->fraction;
-                        $rowdata->count = $data->count;
-                        $rowdata->part = $letterstr[$counter++] . ')';
-
-                        $classname = '';
-                        if ($rowdata->fraction > 0) {
-                            $classname = 'greenrow';
-                        } else if ($rowdata->fraction < 0) {
-                            $classname = 'redrow';
-                        }
-
-                        if ($counter2 == 0 && $partcounter == 0) {
-                            if ($this->table->is_downloading()) {
-                                $rowdata->name = format_text(strip_tags($question->questiontext), FORMAT_PLAIN);
-                                $rowdata->name = str_ireplace(array('<br />', '<br/>', '<br>', "\r\n"),
-                                        array('', '', '', ''), $rowdata->name);
-                            } else {
-                                $rowdata->name = format_text(html_to_text($question->questiontext));
-                            }
-                        } else {
-                            $rowdata->name = '';
-                        }
-                        $rowdata->s = '';
-                        $rowdata->facility = '';
-                        $rowdata->sd = '';
-                        $rowdata->intended_weight = '';
-                        $rowdata->effective_weight = '';
-                        $rowdata->discrimination_index = '';
-                        $this->table->add_data_keyed($this->table->format_row($rowdata), $classname);
+                        $this->output_response_data($rowdata, $data->fraction, $data->count, $letterstr, $counter, $counter2, $partcounter, $question);
+                        $counter++;
                         $partcounter++;
                         break; // We want to display every response only once.
                     }
@@ -881,7 +825,37 @@ class offlinequiz_statistics_report extends offlinequiz_default_report {
             $counter2++;
         }
     }
-
+    private function output_response_data($rowdata, $fraction, $count, $letterstr, $counter, $counter2, $partcounter, $question) {
+        $rowdata->response = str_ireplace(array('<br />', '<br/>', '<br>', "\r\n"),
+            array('', '', '', ''), $rowdata->response);
+        $rowdata->fraction = $fraction;
+        $rowdata->count = $count;
+        $rowdata->part = $letterstr[$counter] . ')';
+        $classname = '';
+        if ($rowdata->fraction > 0) {
+            $classname = 'greenrow';
+        } else if ($rowdata->fraction < 0) {
+            $classname = 'redrow';
+        }
+        if ($counter2 == 0 && $partcounter == 0) {
+            if ($this->table->is_downloading()) {
+                $rowdata->name = format_text(strip_tags($question->questiontext), FORMAT_PLAIN);
+                $rowdata->name = str_ireplace(array('<br />', '<br/>', '<br>', "\r\n"),
+                    array('', '', '', ''), $rowdata->name);
+            } else {
+                $rowdata->name = format_text(html_to_text($question->questiontext));
+            }
+        } else {
+            $rowdata->name = '';
+        }
+        $rowdata->s = '';
+        $rowdata->facility = '';
+        $rowdata->sd = '';
+        $rowdata->intended_weight = '';
+        $rowdata->effective_weight = '';
+        $rowdata->discrimination_index = '';
+        $this->table->add_data_keyed($this->table->format_row($rowdata), $classname);
+    }
     /**
      * Output the table of overall offlinequiz statistics.
      * @param array $offlinequizinfo as returned by {@link get_formatted_offlinequiz_info_data()}.

@@ -20,14 +20,15 @@
  * @author    Juergen Zimmer
  * @author    Richard Rode
  * @author    Alexander Heher
+ * @author    Adrian Czermak
  * @copyright 2014 Academic Moodle Cooperation {@link http://www.academic-moodle-cooperation.org}
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2019012900;
-$plugin->requires  = 2018051700;
+$plugin->version   = 2020060800;
+$plugin->requires  = 2020060200;
 $plugin->component = 'mod_offlinequiz';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = "v3.6.0.1";
+$plugin->release   = "v3.10.0.1";

@@ -40,30 +40,7 @@ $downloadall = optional_param('downloadall' , false, PARAM_BOOL);
 
 $letterstr = 'ABCDEFGHIJKL';
 
-if ($id) {
-    if (!$cm = get_coursemodule_from_id('offlinequiz', $id)) {
-        print_error("There is no coursemodule with id $id");
-    }
-
-    if (!$course = $DB->get_record("course", array('id' => $cm->course))) {
-        print_error("Course is misconfigured");
-    }
-
-    if (!$offlinequiz = $DB->get_record("offlinequiz", array('id' => $cm->instance))) {
-        print_error("The offlinequiz with id $cm->instance corresponding to this coursemodule $id is missing");
-    }
-
-} else {
-    if (! $offlinequiz = $DB->get_record("offlinequiz", array('id' => $q))) {
-        print_error("There is no offlinequiz with id $q");
-    }
-    if (! $course = $DB->get_record("course", array('id' => $offlinequiz->course))) {
-        print_error("The course with id $offlinequiz->course that the offlinequiz with id $q belongs to is missing");
-    }
-    if (! $cm = get_coursemodule_from_instance("offlinequiz", $offlinequiz->id, $course->id)) {
-        print_error("The course module for the offlinequiz with id $q is missing");
-    }
-}
+list($offlinequiz, $course, $cm) = get_course_objects($id, $q);
 
 $offlinequiz->optionflags = 0;
 
@@ -97,7 +74,7 @@ if ($node = $PAGE->settingsnav->find('mod_offlinequiz_createquiz', navigation_no
     $node->make_active();
 }
 
-if (!$groups = $DB->get_records('offlinequiz_groups', array('offlinequizid' => $offlinequiz->id), 'number', '*', 0,
+if (!$groups = $DB->get_records('offlinequiz_groups', array('offlinequizid' => $offlinequiz->id), 'groupnumber', '*', 0,
         $offlinequiz->numgroups)) {
     print_error('There are no offlinequiz groups', "edit.php?q=$offlinequiz->id$amp;sesskey=".sesskey());
 }
@@ -200,7 +177,7 @@ if ($mode == 'preview') {
             echo $OUTPUT->notification(get_string('formsexist', 'offlinequiz'), 'notifyproblem');
         } else {
             $offlinequiz = offlinequiz_delete_template_usages($offlinequiz);
-            $groups = $DB->get_records('offlinequiz_groups', array('offlinequizid' => $offlinequiz->id), 'number',
+            $groups = $DB->get_records('offlinequiz_groups', array('offlinequizid' => $offlinequiz->id), 'groupnumber',
                       '*', 0, $offlinequiz->numgroups);
         }
     }
@@ -208,7 +185,7 @@ if ($mode == 'preview') {
     $done = 0;
     // Process group data.
     foreach ($groups as $group) {
-        $groupletter = $letterstr[$group->number - 1];
+        $groupletter = $letterstr[$group->groupnumber - 1];
 
         // Print the group heading.
         echo $OUTPUT->heading(get_string('previewforgroup', 'offlinequiz', $groupletter));
@@ -232,7 +209,7 @@ if ($mode == 'preview') {
         // Load the questions.
         if (!$questions = $DB->get_records_sql($sql, $params)) {
             $url = new moodle_url($CFG->wwwroot . '/mod/offlinequiz/edit.php',
-                    array('cmid' => $cm->id, 'groupnumber' => $group->number, 'noquestions' => 1));
+                    array('cmid' => $cm->id, 'groupnumber' => $group->groupnumber, 'noquestions' => 1));
             echo html_writer::link($url,  get_string('noquestionsfound', 'offlinequiz', $groupletter),
                     array('class' => 'linkbox'));
             echo $OUTPUT->box_end();
@@ -276,7 +253,6 @@ if ($mode == 'preview') {
             }
         } else {
             foreach ($questions as $question) {
-                print('questionpage '. $question->page . '\n');
                 if ($question->page > $currentpage) {
                     echo '<center>//---------------------- ' . get_string('newpage', 'offlinequiz') .
                             ' ----------------//</center>';
@@ -407,7 +383,7 @@ if ($mode == 'preview') {
         echo $OUTPUT->box_start('generalbox linkbox docsbox');
 
         foreach ($groups as $group) {
-            $groupletter = $letterstr[$group->number - 1];
+            $groupletter = $letterstr[$group->groupnumber - 1];
 
             if (!$offlinequiz->docscreated) {
                 if (!$templateusage = offlinequiz_get_group_template_usage($offlinequiz, $group, $context)) {
@@ -462,7 +438,7 @@ if ($mode == 'preview') {
         echo '<br/>';
 
         foreach ($groups as $group) {
-            $groupletter = $letterstr[$group->number - 1];
+            $groupletter = $letterstr[$group->groupnumber - 1];
 
             if (!$templateusage = offlinequiz_get_group_template_usage($offlinequiz, $group, $context)) {
                 print_error("Missing data for group " . $groupletter,
@@ -502,7 +478,7 @@ if ($mode == 'preview') {
         echo $OUTPUT->box_start('generalbox linkbox docsbox');
 
         foreach ($groups as $group) {
-            $groupletter = $letterstr[$group->number - 1];
+            $groupletter = $letterstr[$group->groupnumber - 1];
 
             if (!$templateusage = offlinequiz_get_group_template_usage($offlinequiz, $group, $context)) {
                 print_error("Missing data for group " . $groupletter,
